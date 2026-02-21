@@ -8,7 +8,8 @@ pipeline {
 
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
-        IMAGE_NAME = "tarunwq/boardgame1"
+        IMAGE_NAME = "tarun403/boardgame1"   // ✅ Your DockerHub username
+        IMAGE_TAG = "latest"
     }
 
     stages {
@@ -21,21 +22,15 @@ pipeline {
             }
         }
 
-        stage('Compile') {
-    steps {
-        sh 'mvn clean package -DskipTests'
-    }
-}
-
-       stage('Test') {
-    steps {
-        sh 'echo "Skipping tests for CI pipeline"'
-    }
-}
+        stage('Build (Skip Tests)') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
 
         stage('Trivy File Scan') {
             steps {
-                sh 'trivy fs --scanners vuln --format table -o trivy-fs-report.html .'
+                sh 'trivy fs --scanners vuln .'
             }
         }
 
@@ -58,21 +53,15 @@ pipeline {
             }
         }
 
-        stage('Build Jar') {
-            steps {
-                sh 'mvn package -DskipTests'
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:latest ."
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
-        stage('Docker Scan') {
+        stage('Docker Image Scan') {
             steps {
-                sh "trivy image ${IMAGE_NAME}:latest"
+                sh "trivy image ${IMAGE_NAME}:${IMAGE_TAG}"
             }
         }
 
@@ -83,10 +72,10 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh """
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    docker push ${IMAGE_NAME}:latest
-                    """
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                    '''
                 }
             }
         }
@@ -101,6 +90,18 @@ pipeline {
             steps {
                 sh 'kubectl get pods'
             }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline execution completed."
+        }
+        success {
+            echo "CI/CD Pipeline SUCCESS 🚀"
+        }
+        failure {
+            echo "Pipeline FAILED ❌"
         }
     }
 }
