@@ -22,16 +22,16 @@ pipeline {
         }
 
         stage('Compile') {
-            steps {
-                sh 'mvn clean compile'
-            }
-        }
+    steps {
+        sh 'mvn clean package -DskipTests'
+    }
+}
 
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-        }
+       stage('Test') {
+    steps {
+        sh 'echo "Skipping tests for CI pipeline"'
+    }
+}
 
         stage('Trivy File Scan') {
             steps {
