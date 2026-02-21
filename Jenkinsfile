@@ -81,10 +81,10 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
-            steps {
-                sh 'kubectl apply -f deployment.yaml'
-            }
-        }
+    steps {
+        sh 'kubectl apply -f deployment-service.yaml'
+    }
+}
 
         stage('Verify Deployment') {
             steps {
